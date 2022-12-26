@@ -1,0 +1,45 @@
+version: '3'
+
+networks:
+  payhere:
+    driver: bridge
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    hostname: mysql
+    networks:
+      - payhere
+    ports:
+      - 3307:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: accountbook
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - /Volumes/shared/mysql/data:/var/lib/mysql:rw
+    user: mysql
+  accountbook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: accountbook
+    container_name: accountbook-api
+    networks:
+      - payhere
+    ports:
+      - 8080:8080
+    expose:
+      - 8080
+    depends_on:
+      - mysql
+    environment:
+      - TZ=Asia/Seoul
+      - DB_HOST=mysql
+    command: uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+    restart: always
+    volumes:
+      - ./:/src
